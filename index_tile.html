@@ -1,0 +1,132 @@
+<!doctype html>
+<html data-theme="light">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <title>GRANULAR - Rural typology</title>
+    <script src="https://unpkg.com/maplibre-gl@4.0.0/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@4.0.0/dist/maplibre-gl.css" rel="stylesheet" />
+    <script src="https://unpkg.com/pmtiles@3.0.7/dist/pmtiles.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet">
+    <style>
+     body {
+       width: 100%;
+       height: 100%;
+       margin: 0;
+       padding: 0;
+     }
+     html {
+       height: 100%;
+     }
+     #map {
+       width: 100%;
+       height: 100%;
+     }
+     .maplibregl-popup-content {
+       font-family: 'Montserrat', sans-serif;
+       font-size: 12px;
+       background-color: #252a53 !important;
+       color: white !important;
+     }
+     .maplibregl-popup-close-button {
+       color: white;
+     }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script>
+     // Register PMTiles protocol
+     let protocol = new pmtiles.Protocol();
+     maplibregl.addProtocol("pmtiles", protocol.tile);
+
+     const map = new maplibregl.Map({
+       container: 'map',
+       style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+       center: [1.4, 49.4],
+       zoom: 5,
+       minZoom: 0,
+       maxZoom: 14,
+     });
+
+     // Add navigation controls
+     map.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+     map.on('load', () => {
+       // Add PMTiles source
+       map.addSource('polygons', {
+         type: 'vector',
+         url: 'pmtiles://layers/polygons.pmtiles',
+       });
+
+       // Add fill layer with color based on urbanization_rank
+       map.addLayer({
+         id: 'polygons-fill',
+         type: 'fill',
+         source: 'polygons',
+         'source-layer': 'polygons',
+         paint: {
+           'fill-color': [
+             'match',
+             ['get', 'urbanization_rank'],
+             1, '#683e0c',  // Inner urban - dark brown
+             2, '#a56d34',  // Outer urban - medium brown
+             3, '#cba67c',  // Peri-urban - light brown
+             4, '#ddc4ab',  // Local centre - very light brown
+             5, '#c2d8aa',  // Rural close to urban - light green
+             6, '#a3bf7c',  // Rural heartland - medium green
+             7, '#698f5c',  // Sparsely populated - dark green
+             '#a09fbc'      // default gray
+           ],
+           'fill-opacity': 0.8
+         }
+       });
+
+       // Add line layer for borders
+       map.addLayer({
+         id: 'polygons-line',
+         type: 'line',
+         source: 'polygons',
+         'source-layer': 'polygons',
+         paint: {
+           'line-color': '#ffffff',
+           'line-width': 0.3,
+           'line-opacity': 0.3
+         }
+       });
+
+       // Add popup on click
+       map.on('click', 'polygons-fill', (e) => {
+         const props = e.features[0].properties;
+         const typeNames = {
+           1: "Inner urban area",
+           2: "Outer urban area",
+           3: "Peri-urban area",
+           4: "Local centre in rural area",
+           5: "Rural area close to urban",
+           6: "Rural heartland",
+           7: "Sparsely populated rural area"
+         };
+
+         new maplibregl.Popup()
+                       .setLngLat(e.lngLat)
+                       .setHTML(`
+             <div>
+               <b>${typeNames[props.urbanization_rank] || 'Unknown'}</b><br/>
+               <small>ID: ${props.GRD_ID}</small>
+             </div>
+                       `)
+                       .addTo(map);
+       });
+
+       // Change cursor on hover
+       map.on('mouseenter', 'polygons-fill', () => {
+         map.getCanvas().style.cursor = 'pointer';
+       });
+
+       map.on('mouseleave', 'polygons-fill', () => {
+         map.getCanvas().style.cursor = '';
+       });
+     });
+    </script>
+  </body>
+</html>
