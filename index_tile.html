@@ -24,7 +24,7 @@
      .maplibregl-popup-content {
        font-family: 'Montserrat', sans-serif;
        font-size: 12px;
-       background-color: #252a53 !important;
+       background-color: #f4c01e !important;
        color: white !important;
      }
      .maplibregl-popup-close-button {
@@ -52,7 +52,7 @@
      map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
      map.on('load', () => {
-       // Add PMTiles source
+       // PMTiles source
        map.addSource('polygons', {
          type: 'vector',
          url: 'pmtiles://layers/polygons.pmtiles',
@@ -73,11 +73,9 @@
              3, '#cba67c',  // Peri-urban - light brown
              4, '#ddc4ab',  // Local centre - very light brown
              5, '#c2d8aa',  // Rural close to urban - light green
-             6, '#a3bf7c',  // Rural heartland - medium green
-             7, '#698f5c',  // Sparsely populated - dark green
              '#a09fbc'      // default gray
            ],
-           'fill-opacity': 0.8
+           'fill-opacity': 1
          }
        });
 
@@ -98,20 +96,18 @@
        map.on('click', 'polygons-fill', (e) => {
          const props = e.features[0].properties;
          const typeNames = {
-           1: "Inner urban area",
-           2: "Outer urban area",
-           3: "Peri-urban area",
-           4: "Local centre in rural area",
-           5: "Rural area close to urban",
-           6: "Rural heartland",
-           7: "Sparsely populated rural area"
+           1: "1",
+           2: "2",
+           3: "3",
+           4: "4",
+           5: "5",
          };
 
          new maplibregl.Popup()
                        .setLngLat(e.lngLat)
                        .setHTML(`
              <div>
-               <b>${typeNames[props.urbanization_rank] || 'Unknown'}</b><br/>
+               <b>Cluster: ${typeNames[props.urbanization_rank] || 'Unknown'}</b><br/>
                <small>ID: ${props.GRD_ID}</small>
              </div>
                        `)
