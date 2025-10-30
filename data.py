@@ -2,7 +2,7 @@ import geopandas as gpd
 import json
 import os
 
-gdf = gpd.read_parquet("data/typology_kmeans_silhouette_11_5cl.parquet")
+gdf = gpd.read_parquet("data/typology_combined_cluster_info.parquet")
 gdf = gdf.explode(ignore_index=True)
 
 print(f"Original features: {len(gdf):,}")
@@ -10,8 +10,8 @@ print(f"Original features: {len(gdf):,}")
 print("Simplifying geometries...")
 gdf["geometry"] = gdf.geometry.simplify(tolerance=50, preserve_topology=True)
 
-print("Dissolving by urbanization_rank...")
-gdf_dissolved = gdf.dissolve(by="urbanization_rank", as_index=False, aggfunc="first")
+print("Dissolving by cluster_info...")
+gdf_dissolved = gdf.dissolve(by="cluster_info", as_index=False, aggfunc="first")
 
 print(f"After dissolving: {len(gdf_dissolved)} features")
 
@@ -34,3 +34,18 @@ gdf_exploded.to_file(output_path, driver="GeoJSON")
 file_size = os.path.getsize(output_path) / 1024 / 1024
 print(f"Exported {len(gdf_exploded):,} features")
 print(f"File size: {file_size:.2f} MB")
+
+
+
+# tippecanoe -o layers/polygons.mbtiles \
+#                                                           -Z5 -z14 \
+#                                                           --drop-densest-as-needed \
+#                                                           --coalesce-densest-as-needed \
+#                                                           --simplification=10 \
+#                                                           --gamma=3.0 \
+#                                                           --detect-shared-borders \
+#                                                           -l polygons \
+#                                                           layers/polygons_dissolved_exploded.geojson
+
+
+# pmtiles convert layers/polygons.mbtiles layers/polygons.pmtiles
